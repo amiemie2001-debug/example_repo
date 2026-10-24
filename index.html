@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A simple room reservation system built with HTML, CSS, JavaScript, and local storage.">
+  <title>StayEase | Room Reservation</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="booking.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="StayEase home"><span class="brand-mark">S</span><span>StayEase</span></a>
+    <span class="header-note">Room reservation demo</span>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">YOUR NEXT STAY STARTS HERE</p>
+        <h1>Find a room.<br><span>Make yourself at home.</span></h1>
+        <p class="hero-copy">Browse rooms, reserve your dates, and keep track of your bookings in one simple place.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true"><span class="sun"></span><span class="hill hill-back"></span><span class="hill hill-front"></span><span class="window">✦</span></div>
+    </section>
+
+    <section class="section-block" aria-labelledby="rooms-heading">
+      <div class="section-heading">
+        <div><p class="eyebrow">EXPLORE YOUR OPTIONS</p><h2 id="rooms-heading">Choose your room</h2></div>
+        <span class="section-caption">5 rooms · Sample rates in PHP</span>
+      </div>
+      <div id="room-list" class="room-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="content-grid">
+      <section class="panel reservation-panel" aria-labelledby="reservation-heading">
+        <div class="panel-heading"><div><p class="eyebrow">BOOK YOUR STAY</p><h2 id="reservation-heading">Make a reservation</h2></div><span class="panel-icon" aria-hidden="true">↗</span></div>
+        <div id="form-message" class="message" role="status" aria-live="polite" hidden></div>
+        <form id="reservation-form">
+          <div class="form-row">
+            <label>Guest name<input id="guest-name" name="guestName" autocomplete="name" required maxlength="80" placeholder="e.g. Alex Santos"></label>
+            <label>Contact number<input id="guest-contact" name="guestContact" autocomplete="tel" required maxlength="30" placeholder="e.g. 0917 123 4567"></label>
+          </div>
+          <label>Room<select id="room-select" name="roomId" required><option value="">Choose a room</option></select></label>
+          <div class="form-row">
+            <label>Check-in<input id="check-in" name="checkIn" type="date" required></label>
+            <label>Check-out<input id="check-out" name="checkOut" type="date" required></label>
+          </div>
+          <div class="estimate"><div><span class="estimate-label">Estimated total</span><strong id="total-cost">₱0.00</strong></div><span id="night-count">Choose your dates</span></div>
+          <button class="button button-primary button-full" type="submit">Confirm reservation <span aria-hidden="true">→</span></button>
+          <p class="fine-print">Demo only. Your reservations are saved in this browser, not sent to a real hotel.</p>
+        </form>
+      </section>
+
+      <section class="panel reservations-panel" aria-labelledby="reservations-heading">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR BOOKINGS</p><h2 id="reservations-heading">Reservation list</h2></div><span id="reservation-count" class="count-badge">0</span></div>
+        <div id="reservation-list" class="reservation-list" aria-live="polite"></div>
+      </section>
+    </section>
+    <footer class="site-footer"><span>StayEase · Room Reservation System</span><span>Made for learning and practice</span></footer>
+  </main>
+</body>
+</html>
