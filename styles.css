@@ -95,3 +95,22 @@ input:focus, select:focus { border-color: #5a9c7c; box-shadow: 0 0 0 3px #d9eee1
 @media (max-width: 850px) { .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero-art { opacity: .55; right: -90px; } .content-grid { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .site-header { height: 62px; padding: 0 20px; } .header-note { font-size: 11px; } .page-shell { width: calc(100% - 28px); } .hero { min-height: 270px; margin: 20px 0 34px; padding: 28px 23px; } .hero-art { right: -170px; opacity: .32; } h1 { font-size: 34px; } .hero-copy { font-size: 13px; } .section-heading { align-items: start; flex-direction: column; gap: 8px; } h2 { font-size: 22px; } .room-grid { grid-template-columns: 1fr; } .room-visual { height: 100px; } .panel { padding: 19px; } .panel-heading h2 { font-size: 19px; } .form-row { grid-template-columns: 1fr; gap: 0; } .site-footer { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Check-in / check-out history */
+.history-panel { margin-top: 22px; }
+.history-note { margin: -10px 0 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.activity-history { display: grid; gap: 0; }
+.history-entry { position: relative; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; padding: 0 0 20px; }
+.history-entry:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 12px; bottom: 0; width: 2px; background: var(--line); }
+.history-dot { position: relative; z-index: 1; width: 12px; height: 12px; margin-top: 4px; border: 3px solid #b8d9c4; border-radius: 50%; background: var(--green); }
+.history-entry-content { min-width: 0; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; background: #fcfdfb; }
+.history-entry-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.history-entry-top strong { font: 700 13px Manrope, sans-serif; }
+.history-entry time, .history-reference, .history-details { color: var(--muted); font-size: 11px; }
+.history-entry-content p { margin: 7px 0 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.history-entry-content .history-reference { font-size: 10px; }
+.history-entry-content .history-details { margin-top: 5px; }
+.booking-actions { flex-wrap: wrap; gap: 8px; }
+.status-checked-in { background: #e1f0ff; color: #205b8f; }
+.status-checked-out { background: #eee8fb; color: #5d428b; }
+.status-cancelled { background: #f0f0f0; color: #6b7470; }
