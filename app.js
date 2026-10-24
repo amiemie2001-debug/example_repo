@@ -2,6 +2,7 @@
   "use strict";
   const { ROOMS, daysBetween, makeReservation, cancelReservation } = window.RoomBooking;
   const STORAGE_KEY = "stayease-reservations-v1";
+  const HISTORY_KEY = "stayease-activity-history-v1";
   const $ = (id) => document.getElementById(id);
   const form = $("reservation-form");
   const roomList = $("room-list");
@@ -9,20 +10,22 @@
   const checkInInput = $("check-in");
   const checkOutInput = $("check-out");
   const message = $("form-message");
-  let reservations = loadReservations();
+  let reservations = loadArray(STORAGE_KEY);
+  let history = loadArray(HISTORY_KEY);
 
-  function loadReservations() {
+  function loadArray(key) {
     try {
-      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const value = JSON.parse(localStorage.getItem(key) || "[]");
       return Array.isArray(value) ? value : [];
     } catch (error) {
       return [];
     }
   }
 
-  function saveReservations() {
+  function saveData() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
       return true;
     } catch (error) {
       showMessage("Could not save to browser storage. Check your browser settings and try again.", "error");
@@ -30,8 +33,21 @@
     }
   }
 
+  function logActivity(booking, action, details) {
+    history.unshift({
+      id: "EV-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
+      bookingId: booking.id,
+      guestName: booking.guestName,
+      roomId: booking.roomId,
+      roomName: booking.roomName,
+      action,
+      details: details || "",
+      timestamp: new Date().toISOString()
+    });
+  }
+
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, (character) => ({
+    return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     })[character]);
   }
@@ -44,6 +60,12 @@
     if (!value) return "";
     const parts = value.split("-").map(Number);
     return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function displayTimestamp(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Date unavailable";
+    return date.toLocaleString("en-PH", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   function showMessage(text, type) {
@@ -72,7 +94,6 @@
   }
 
   function renderReservations() {
-    const activeCount = reservations.filter((item) => item.status !== "cancelled").length;
     $("reservation-count").textContent = String(reservations.length);
     if (reservations.length === 0) {
       $("reservation-list").innerHTML = '<div class="empty-state">No reservations yet.<br>Choose a room and book your first stay.</div>';
@@ -80,11 +101,46 @@
     }
     const sorted = [...reservations].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
     $("reservation-list").innerHTML = sorted.map((booking) => {
-      const cancelled = booking.status === "cancelled";
+      const status = booking.status || "confirmed";
+      const cancelled = status === "cancelled";
+      const statusLabel = status === "checked-in" ? "Checked in" : status === "checked-out" ? "Checked out" : cancelled ? "Cancelled" : "Confirmed";
+      const statusClass = status === "checked-in" ? "status-checked-in" : status === "checked-out" ? "status-checked-out" : cancelled ? "status-cancelled" : "";
+      let actions = "";
+      if (status === "confirmed") {
+        actions = `<button class="button button-secondary" type="button" data-check-in="${escapeHtml(booking.id)}">Check in</button>
+          <button class="button button-danger" type="button" data-cancel-booking="${escapeHtml(booking.id)}">Cancel reservation</button>`;
+      } else if (status === "checked-in") {
+        actions = `<button class="button button-primary" type="button" data-check-out="${escapeHtml(booking.id)}">Check out</button>`;
+      }
       return `<article class="booking-card">
-        <div class="booking-top"><div><h3 class="booking-name">${escapeHtml(booking.guestName)}</h3><p class="booking-meta">Ref: ${escapeHtml(booking.id)}<br>Room ${escapeHtml(booking.roomId)} · ${escapeHtml(booking.roomName)}</p></div><span class="status-pill" style="${cancelled ? 'background:#f0f0f0;color:#6b7470' : ''}">${cancelled ? "Cancelled" : "Confirmed"}</span></div>
+        <div class="booking-top"><div><h3 class="booking-name">${escapeHtml(booking.guestName)}</h3><p class="booking-meta">Ref: ${escapeHtml(booking.id)}<br>Room ${escapeHtml(booking.roomId)} · ${escapeHtml(booking.roomName)}</p></div><span class="status-pill ${statusClass}">${statusLabel}</span></div>
         <div class="booking-bottom"><div class="booking-dates">${displayDate(booking.checkIn)} → ${displayDate(booking.checkOut)}<br>${booking.nights} night(s)</div><strong class="booking-price">${money(booking.total)}</strong></div>
-        ${cancelled ? "" : `<div class="booking-actions"><button class="button button-danger" type="button" data-cancel-booking="${escapeHtml(booking.id)}">Cancel reservation</button></div>`}
+        ${actions ? `<div class="booking-actions">${actions}</div>` : ""}
+      </article>`;
+    }).join("");
+  }
+
+  function renderHistory() {
+    $("history-count").textContent = String(history.length);
+    if (history.length === 0) {
+      $("activity-history").innerHTML = '<div class="empty-state">No activity recorded yet. New reservations and check-in/check-out actions will appear here.</div>';
+      return;
+    }
+    $("activity-history").innerHTML = history.map((entry) => {
+      const labels = {
+        reserved: "Reservation created",
+        "checked-in": "Guest checked in",
+        "checked-out": "Guest checked out",
+        cancelled: "Reservation cancelled"
+      };
+      return `<article class="history-entry">
+        <span class="history-dot" aria-hidden="true"></span>
+        <div class="history-entry-content">
+          <div class="history-entry-top"><strong>${escapeHtml(labels[entry.action] || entry.action)}</strong><time>${escapeHtml(displayTimestamp(entry.timestamp))}</time></div>
+          <p><strong>${escapeHtml(entry.guestName)}</strong> · Room ${escapeHtml(entry.roomId)} — ${escapeHtml(entry.roomName)}</p>
+          <p class="history-reference">Booking ref: ${escapeHtml(entry.bookingId)}</p>
+          ${entry.details ? `<p class="history-details">${escapeHtml(entry.details)}</p>` : ""}
+        </div>
       </article>`;
     }).join("");
   }
@@ -106,6 +162,26 @@
     const localToday = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
     checkInInput.min = localToday;
     checkOutInput.min = checkInInput.value || localToday;
+  }
+
+  function updateBookingStatus(id, nextStatus, action, messageText) {
+    const booking = reservations.find((item) => item.id === id);
+    if (!booking) return;
+    const allowed = (booking.status || "confirmed") === "confirmed" && ["checked-in", "cancelled"].includes(nextStatus)
+      || booking.status === "checked-in" && nextStatus === "checked-out";
+    if (!allowed) return;
+    const previousReservations = reservations;
+    const previousHistory = history;
+    reservations = reservations.map((item) => item.id === id ? { ...item, status: nextStatus, [action + "At"]: new Date().toISOString() } : item);
+    logActivity(booking, action, nextStatus === "checked-in" ? "Check-in recorded." : nextStatus === "checked-out" ? "Check-out recorded." : "Reservation cancelled.");
+    if (!saveData()) {
+      reservations = previousReservations;
+      history = previousHistory;
+      return;
+    }
+    renderReservations();
+    renderHistory();
+    showMessage(messageText, "success");
   }
 
   roomList.addEventListener("click", (event) => {
@@ -131,35 +207,42 @@
       showMessage(result.errors.join(" "), "error");
       return;
     }
+    const previousReservations = reservations;
+    const previousHistory = history;
     reservations = [result.booking, ...reservations];
-    if (!saveReservations()) {
-      reservations = reservations.filter((item) => item.id !== result.booking.id);
+    logActivity(result.booking, "reserved", "Reservation confirmed for " + result.booking.nights + " night(s).");
+    if (!saveData()) {
+      reservations = previousReservations;
+      history = previousHistory;
       renderReservations();
+      renderHistory();
       return;
     }
     form.reset();
     setDateMinimums();
     updateEstimate();
     renderReservations();
+    renderHistory();
     showMessage("Reservation confirmed! Reference: " + result.booking.id, "success");
   });
 
   $("reservation-list").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-cancel-booking]");
-    if (!button) return;
-    const booking = reservations.find((item) => item.id === button.dataset.cancelBooking);
-    if (!booking || booking.status === "cancelled") return;
-    if (!window.confirm("Cancel reservation " + booking.id + "?")) return;
-    const result = cancelReservation(reservations, booking.id);
-    if (!result.found) return;
-    const previous = reservations;
-    reservations = result.reservations;
-    if (!saveReservations()) {
-      reservations = previous;
+    const checkInButton = event.target.closest("[data-check-in]");
+    if (checkInButton) {
+      updateBookingStatus(checkInButton.dataset.checkIn, "checked-in", "checked-in", "Guest checked in successfully.");
       return;
     }
-    renderReservations();
-    showMessage("Reservation " + booking.id + " has been cancelled.", "success");
+    const checkOutButton = event.target.closest("[data-check-out]");
+    if (checkOutButton) {
+      updateBookingStatus(checkOutButton.dataset.checkOut, "checked-out", "checked-out", "Guest checked out successfully.");
+      return;
+    }
+    const cancelButton = event.target.closest("[data-cancel-booking]");
+    if (!cancelButton) return;
+    const booking = reservations.find((item) => item.id === cancelButton.dataset.cancelBooking);
+    if (!booking || (booking.status || "confirmed") !== "confirmed") return;
+    if (!window.confirm("Cancel reservation " + booking.id + "?")) return;
+    updateBookingStatus(booking.id, "cancelled", "cancelled", "Reservation " + booking.id + " has been cancelled.");
   });
 
   roomSelect.addEventListener("change", updateEstimate);
@@ -174,4 +257,5 @@
   setDateMinimums();
   updateEstimate();
   renderReservations();
+  renderHistory();
 })();
