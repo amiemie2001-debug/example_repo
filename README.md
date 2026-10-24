@@ -10,8 +10,10 @@ A responsive room reservation MVP built with plain HTML, CSS, and JavaScript. It
 - Validate required fields and require check-out to be later than check-in.
 - Prevent overlapping reservations for the same room.
 - View booking references, guest details, room, dates, cost, and status.
+- Record guest check-in and check-out using reservation actions.
+- View a timestamped activity history for reservations, check-ins, check-outs, and cancellations.
 - Cancel a reservation without deleting its history.
-- Save reservations in the current browser.
+- Save reservations and activity history in the current browser; both remain after refreshing the page.
 - Automated logic tests using Node.js's built-in test runner.
 
 ## Sample rooms and rates
@@ -98,7 +100,8 @@ example_repo/
 ## Important limitations
 
 - This is a learning/demo MVP, not a production hotel booking platform.
-- Reservations are saved only in the current browser profile and origin. They are not shared across devices or users.
+- Reservations and activity history are saved only in the current browser profile and origin. They remain after refreshing the page but are not shared across devices or different users/browsers.
+- This demo records who the guest is by reservation name; it does not authenticate staff accounts, so it cannot reliably identify which employee performed check-in/check-out.
 - Without a server, simultaneous bookings from separate browsers cannot be coordinated reliably.
 - No authentication, payments, email confirmations, or real hotel inventory integration is included.
 - Do not enter sensitive or real customer information into this demo.
