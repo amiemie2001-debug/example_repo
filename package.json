@@ -1,0 +1,12 @@
+{
+  "name": "stayease-room-reservation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A beginner-friendly room reservation MVP built with HTML, CSS, JavaScript, and browser localStorage.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
